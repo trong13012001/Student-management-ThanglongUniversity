@@ -3,8 +3,12 @@ import {
   StyleSheet, TextInput, View, Text, ScrollView, Dimensions, Platform,
   Image, Keyboard, TouchableOpacity, KeyboardAvoidingView, Alert,StatusBar
 } from "react-native"; 
-import { SvgUri } from 'react-native-svg';
-import Loader from "../../components/Loader";
+import Loader from "../../components/Loader/Loader";
+import Icon from 'react-native-vector-icons/FontAwesome5';
+import qs from 'qs';
+import * as SecureStore from "expo-secure-store";
+import axios from "axios";
+import { BASE_URL } from "../../env/url";
 const windowHeight=Dimensions.get('window').height;
 const windowWidth=Dimensions.get('window').width;
 const statusBarStyle = Platform.OS === 'ios' ? 'dark-content':'light-content';
@@ -14,14 +18,18 @@ const LoginScreen=({navigation})=>{
     const [userName,setUserName]=useState("");
     const [userPassword,setUserPassword]=useState("");
     const [loading, setLoading]=useState(false);
-    const [hide,setHide]=useState("");
+    const [hide,setHide]=useState(true);
     const passwordInputRef=useRef();
     const userNameInputRef=useRef();
+
+
+
+
     let handleSubmitPress = async()=>{
         if(!userName){
             Alert.alert(
                 "",
-                "Vui long nhap ten.",
+                "Vui lòng nhập tên.",
                 [{text:"OK"}]
             );
             return;
@@ -29,16 +37,104 @@ const LoginScreen=({navigation})=>{
         if(!userPassword){
             Alert.alert(
                 "",
-                "Vui long nhap mat khau.",
+                "Vui lòng nhập mật khẩu.",
                 [{text:"OK"}]
             );
             return;
         }
         setLoading(true)
+        const data = {
+          username: userName,
+          password: userPassword
+        };
+        
+        const formData = qs.stringify(data);
+        await axios.post(`${BASE_URL}/login`,formData,
+        {
+          headers:{
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        }
+        ).then(function(response){
+
+            SecureStore.setItemAsync("isLoggedin", "true");
+            SecureStore.setItemAsync("accessToken", response.data.token.access_token);
+            SecureStore.setItemAsync("refreshToken", response.data.token.refresh_token);
+            console.log(response.data.token.access_token)
+            console.log(response.data.token.refresh_token)
+            
+            setIdSecureStorage();
+            setLoading(false);   
+            }
+        )
+        .catch(function (error) {
+          console.log(error.response.status);
+
+          if(error.response.status==400){
+          console.log(error.response.data);
+          // Login failed, display alert messages
+          setLoading(false);
+          Alert.alert(
+            "Đăng nhập thất bại",
+            `${error.response.data.message}`,
+            [{ text: "OK" }]
+          );
+        }});
+        userNameInputRef.current.clear();
+        passwordInputRef.current.clear();
+        setUserName('');
+        setUserPassword('');
     };
     let moveToPasswordInput=()=>{
         passwordInputRef.current.focus();
     };
+
+
+    const setIdSecureStorage = async () => {
+      // Variables used for calling API
+      const accessToken = await SecureStore.getItemAsync("accessToken");
+      
+      const authorization = `Bearer ${accessToken}`
+      console.log(authorization)
+      // Calling API
+      await axios.get(`${BASE_URL}/user`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'authorization':authorization,
+          },
+        })
+        .then(function (response) {
+          if(response.data.user.role=="1"){
+          // Checking if user is on the onsite list or not
+          console.log(response.data.student)
+            SecureStore.setItemAsync("studentId", `${response.data.student.student_id}`)
+            SecureStore.setItemAsync("fullName", `${response.data.student.name}`)
+            SecureStore.setItemAsync("email", `${response.data.student.email}`)
+            navigation.replace("StudentMainScreen");
+            }
+          if(response.data.user.role=="2"){
+            console.log(response.data.teacher)
+            SecureStore.setItemAsync("teacherId", `${response.data.teacher.teacher_id}`)
+            SecureStore.setItemAsync("fullName", `${response.data.teacher.name}`)
+            SecureStore.setItemAsync("email", `${response.data.teacher.email}`)
+            navigation.replace("TeacherMainScreen");
+          }
+          }
+
+        ) 
+        .catch(function (error) {
+          SecureStore.setItemAsync("isLoggedin", "false");
+          SecureStore.deleteItemAsync('accessToken');
+          SecureStore.deleteItemAsync('refreshToken');
+          Alert.alert(
+            "",
+            `Đăng nhập thất bại. (code: ${error.response.status})`,
+            [{ text: "OK" }]
+          );
+          console.log('setIdSecureStorage', error.response.status);
+        })
+    }
     return(
         <>
               <StatusBar barStyle={statusBarStyle}/>
@@ -78,6 +174,7 @@ const LoginScreen=({navigation})=>{
                     height:100,
                     resizeMode:'contain',
                     alignSelf:'center',
+                    
                 }}
                 ></Image>
                 </View>
@@ -115,7 +212,10 @@ const LoginScreen=({navigation})=>{
                   <TouchableOpacity
                     onPress={() => setHide(!hide)}
                     style={{ alignSelf: 'flex-end', position: 'absolute', padding: 20 }}>
-
+                    <Icon
+                    size={25}
+                    name={hide ? 'eye-slash' : 'eye'}
+                  />
                   </TouchableOpacity>
                 </View>
   

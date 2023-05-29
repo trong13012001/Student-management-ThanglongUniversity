@@ -3,12 +3,17 @@ import {
     StyleSheet, TextInput, View, Text, ScrollView, Dimensions, Platform,
     Image, Keyboard, TouchableOpacity, KeyboardAvoidingView, Alert,StatusBar
   } from "react-native"; 
-const HomeScreen=()=>{
+const TeacherHomeScreen=()=>{
     return(
-        <View>
-            <Text>dasdas</Text>
+        <View
+        style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+            <Text>Teacher Home Screen</Text>
         </View>
 )
 }
 
-export default HomeScreen;
+export default TeacherHomeScreen;

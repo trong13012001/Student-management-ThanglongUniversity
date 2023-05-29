@@ -7,7 +7,8 @@ import SplashScreen from './Screens/Login/SplashScreen';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import LoginScreen from './Screens/Login/LoginScreen';
-import HomeScreen from './Screens/HomeScreen/HomeScreen'
+import StudentMainScreen from './Screens/Student/MainScreen/StudentMainScreen'
+import TeacherMainScreen from './Screens/Teacher/MainScreen/TeacherMainScreen'
 
 // Creat stack for authentication ....
 const Stack = createStackNavigator();
@@ -28,11 +29,16 @@ export default function App() {
               component={LoginScreen}
               options={{ headerShown: false }}
             />
-            {/* <Stack.Screen
-              name="MainScreen"
-              component={MainScreen}
+            <Stack.Screen
+              name="StudentMainScreen"
+              component={StudentMainScreen}
               options={{ headerShown: false }}
-            /> */}
+            />
+            <Stack.Screen
+              name="TeacherMainScreen"
+              component={TeacherMainScreen}
+              options={{ headerShown: false }}
+            />
           </Stack.Navigator>
         </NavigationContainer>
       </View>

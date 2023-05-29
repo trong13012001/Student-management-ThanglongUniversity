@@ -8,7 +8,7 @@ export default StyleSheet.create({
     },
 
     textColor: {
-        color: 'white',
+        color: "#060A52",
     },
 
 });
